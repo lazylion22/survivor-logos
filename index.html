@@ -23,7 +23,7 @@
 </head>
 <body>
     <canvas id="canvas"></canvas>
-    <div id="timer">Time left: <span id="countdown">5:00</span></div>
+    <div id="timer">Time left: <span id="countdown">10:00</span></div>
     <button id="checkBtn" style="display:none;">Check Order</button>
     <button id="manualCheckBtn" style="height:50px;width:100px;font-size: 24px;">check</button>
 
@@ -74,7 +74,7 @@
         }
 
         let timer;
-        let timeleft = 300;
+        let timeleft = 600;
 
         function countdown() {
             const minutes = Math.floor(timeleft / 60);
