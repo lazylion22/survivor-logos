@@ -86,9 +86,6 @@
 
             if (timeleft === 0) {
                 clearInterval(timer);
-                document.getElementById('checkBtn').style.display = 'inline';
-                document.getElementById('checkBtn').addEventListener('click', checkOrder);
-                canvas.removeEventListener('mousedown', handleMouseDown);
             } else {
                 timeleft--;
             }
