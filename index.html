@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Sorting Game</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+    }
+    canvas {
+        border: 1px solid #000;
+        margin: 0 auto;
+        display: block;
+    }
+    #timer {
+        font-size: 20px;
+    }
+</style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="timer">Time left: <span id="countdown">5:00</span></div>
+    <button id="checkBtn" style="display:none;">Check Order</button>
+    <button id="manualCheckBtn" style="height:50px;width:100px;font-size: 24px;">check</button>
+
+    <script>
+        // Function to shuffle array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        let order = []; // Declare order variable here
+
+        function resizeCanvas() {
+            const canvasWidth = window.innerWidth * 0.9;
+            const canvasHeight = window.innerHeight * 0.9;
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            drawImages();
+        }
+
+        // Resize the canvas initially and when the window size changes
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const images = [];
+
+        // Load images
+        let loadedImages = 0;
+        for (let i = 1; i <= 40; i++) {
+            const img = new Image();
+            img.onload = () => {
+                loadedImages++;
+                if (loadedImages === 40) {
+                    // All images are loaded, draw them on the canvas
+                    shuffleArray(order);
+                    drawImages();
+                }
+            };
+            img.src ='imgs/'+i + '.png';
+            images.push(img);
+            order.push(i);
+        }
+
+        let timer;
+        let timeleft = 300;
+
+        function countdown() {
+            const minutes = Math.floor(timeleft / 60);
+            let seconds = timeleft % 60;
+
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+
+            document.getElementById('countdown').textContent = minutes + ':' + seconds;
+
+            if (timeleft === 0) {
+                clearInterval(timer);
+                document.getElementById('checkBtn').style.display = 'inline';
+                document.getElementById('checkBtn').addEventListener('click', checkOrder);
+                canvas.removeEventListener('mousedown', handleMouseDown);
+            } else {
+                timeleft--;
+            }
+        }
+
+        function checkOrder() {
+            // clearInterval(timer);
+
+            let correct = true;
+            for (let i = 0; i < order.length; i++) {
+                if (order[i] !== i + 1) {
+                    correct = false;
+                    break;
+                }
+            }
+
+            if (correct) {
+                alert('Congratulations! The order is correct.');
+            } else {
+                alert('Sorry! The order is incorrect.');
+            }
+        }
+
+        timer = setInterval(countdown, 1000);
+
+        // Draw shuffled images on canvas
+        function drawImages() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const imageWidth = canvas.width / 8; // Width of each image
+            const imageHeight = canvas.height / 5; // Height of each image
+            for (let i = 0; i < order.length; i++) {
+                const row = Math.floor(i / 8);
+                const col = i % 8;
+                const offsetX = (canvas.width - imageWidth * 8) / 2; // Centering images horizontally
+                const offsetY = (canvas.height - imageHeight * 5) / 2; // Centering images vertically
+                ctx.drawImage(images[order[i] - 1], offsetX + col * imageWidth, offsetY + row * imageHeight, imageWidth, imageHeight);
+            }
+        }
+
+        let dragging = false;
+        let dragIndex;
+
+        function handleMouseDown(event) {
+            const mouseX = event.clientX - canvas.getBoundingClientRect().left;
+            const mouseY = event.clientY - canvas.getBoundingClientRect().top;
+
+            for (let i = 0; i < order.length; i++) {
+                const row = Math.floor(i / 8);
+                const col = i % 8;
+                const imageWidth = canvas.width / 8;
+                const imageHeight = canvas.height / 5;
+                const offsetX = (canvas.width - imageWidth * 8) / 2; // Centering images horizontally
+                const offsetY = (canvas.height - imageHeight * 5) / 2; // Centering images vertically
+
+                if (mouseX >= offsetX + col * imageWidth && mouseX <= offsetX + col * imageWidth + imageWidth &&
+                    mouseY >= offsetY + row * imageHeight && mouseY <= offsetY + row * imageHeight + imageHeight) {
+                    dragging = true;
+                    dragIndex = i;
+                    break;
+                }
+            }
+        }
+
+        function handleMouseMove(event) {
+            if (dragging) {
+                const mouseX = event.clientX - canvas.getBoundingClientRect().left;
+                const mouseY = event.clientY - canvas.getBoundingClientRect().top;
+
+                drawImages();
+
+                const imageWidth = canvas.width / 8;
+                const imageHeight = canvas.height / 5;
+                const offsetX = (canvas.width - imageWidth * 8) / 2; // Centering images horizontally
+                const offsetY = (canvas.height - imageHeight * 5) / 2; // Centering images vertically
+
+                ctx.drawImage(images[order[dragIndex] - 1], mouseX - imageWidth / 2, mouseY - imageHeight / 2, imageWidth, imageHeight);
+            }
+        }
+
+        function handleMouseUp(event) {
+            if (dragging) {
+                const mouseX = event.clientX - canvas.getBoundingClientRect().left;
+                const mouseY = event.clientY - canvas.getBoundingClientRect().top;
+
+                const newIndex = Math.floor((mouseY - (canvas.height - canvas.height / 5 * 5) / 2) / (canvas.height / 5)) * 8 + Math.floor((mouseX - (canvas.width - canvas.width / 8 * 8) / 2) / (canvas.width / 8));
+
+                const temp = order[newIndex];
+                order[newIndex] = order[dragIndex];
+                order[dragIndex] = temp;
+
+                drawImages();
+            }
+
+            dragging = false;
+        }
+
+        canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('mouseup', handleMouseUp);
+
+        // Manual check button event listener
+        document.getElementById('manualCheckBtn').addEventListener('click', checkOrder);
+    </script>
+</body>
+</html>
